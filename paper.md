@@ -1,14 +1,10 @@
 # Introduction
 
-Los transductores de magnitudes físicas —tales como celdas de carga basadas en puentes de Wheatstone, galgas extensométricas y sensores piezoeléctricos— entregan variaciones de potencial eléctrico diferencial en el orden de los milivoltios. Dichas señales presentan una relación señal a ruido ($\mathrm{SNR}$) reducida y son altamente vulnerables al ruido electromagnético ambiental, las caídas de tensión por corrientes de retorno y las componentes de modo común inducidas a lo largo del cableado [@doebelin2003]. En consecuencia, el acondicionamiento analógico de la señal constituye una etapa insustituible previa a cualquier proceso de digitalización y telemetría digital [@mancini2003].
+En esta práctica se estudiaron diferentes métodos para el acondicionamiento y análisis de señales eléctricas. En una primera parte, una señal fue procesada mediante distintas configuraciones con amplificadores operacionales, incluyendo un amplificador inversor, un amplificador diferencial y un comparador. También se utilizó un filtro RC para observar su efecto sobre la señal y comprender la función de cada etapa dentro del circuito.
 
-En este laboratorio se diseñó, modeló y validó una arquitectura integral de acondicionamiento de señales, protección analógica por hardware y adquisición digital en tiempo real:
-1. **Subsistema Analógico de Acondicionamiento y Protección:** Estructurado a partir de cuatro amplificadores operacionales LM741 distribuidos en cuatro etapas modulares: amplificación diferencial balanceada con ganancia $A_d = 10.0$ ($R_1 = 1.0\,\mathrm{k}\Omega, R_2 = 10.0\,\mathrm{k}\Omega$), amplificación no inversora con ganancia $A_v = 2.0$ ($R_f = 10.0\,\mathrm{k}\Omega, R_{\mathrm{in}} = 10.0\,\mathrm{k}\Omega$) que establece una ganancia acumulada en cascada de $A_{\mathrm{total}} = 20.0$, un filtro pasabajas pasivo $RC$ de primer orden ($R = 10.0\,\mathrm{k}\Omega, C = 100\,\mathrm{nF}$) con frecuencia de corte nominal $f_c = 159.15\,\mathrm{Hz}$ y constante de tiempo $\tau = 1.0\,\mathrm{ms}$, y un comparador de tensión en lazo abierto con umbral ajustable en $V_{\mathrm{ref}} = 1.00\,\mathrm{V}$ acoplado a un indicador visual LED rojo para la detección instantánea de sobrecargas.
-2. **Subsistema de Adquisición Digital y Telemetría:** Implementado mediante el microcontrolador ESP32 acoplado a un sensor ultrasónico HC-SR04 como transductor digital de tiempo de vuelo, permitiendo evaluar de forma desacoplada la precisión de temporización por hardware del microcontrolador y la estabilidad del flujo de telemetría serial UART a 115200 baudios hacia un Instrumento Virtual (VI) en LabVIEW.
+De manera adicional, se realizó una actividad independiente utilizando un sensor ultrasónico. La señal generada por el sensor fue observada mediante un osciloscopio mientras se acercaba y alejaba un objeto. Esto permitió visualizar cómo cambiaba la amplitud de la señal en función de la posición del objeto.
 
-## Objective
-
-Diseñar, simular, implementar y caracterizar una cadena de acondicionamiento analógico basada en amplificadores operacionales LM741 y un sistema de adquisición digital con microcontrolador ESP32 y supervisión gráfica en tiempo real en LabVIEW, evaluando cuantitativamente la conservación del Producto Ganancia-Ancho de Banda ($\mathrm{GBP}$), la respuesta transitoria y armónica del filtro pasivo $RC$, la conmutación de seguridad por hardware y la calibración estática del sistema de adquisición.
+A través de ambas actividades fue posible relacionar los conceptos teóricos de amplificación, comparación, filtrado y medición de señales con su comportamiento experimental, utilizando instrumentos de laboratorio para analizar las respuestas obtenidas.
 
 ---
 
@@ -89,26 +85,9 @@ $$|H(60\,\mathrm{Hz})| = \frac{1}{\sqrt{1 + (60.0/159.15)^2}} = \frac{1}{\sqrt{1
 con un ángulo de desfase asociado de:
 $$\theta(60\,\mathrm{Hz}) = -\arctan\left(\frac{60.0}{159.15}\right) = -20.66^\circ$$
 
-## Análisis Temporal y Emulación de Osciloscopio: Análisis de Ciclo Completo y Filtrado $RC$
-
-Para analizar la capacidad del filtro para suprimir interferencias y caracterizar su dinámica temporal, se inyectó una señal compuesta por el nivel DC nominal de salida ($1.20\,\mathrm{V}$) contaminada simultáneamente con zumbido de la red eléctrica ($f_{\mathrm{hum}} = 60.0\,\mathrm{Hz}$, amplitud de $120\,\mathrm{mV}$, $V_{pp} = 240\,\mathrm{mV}$) y ruido armónico de conmutación de alta frecuencia ($f_{\mathrm{sw}} = 2.0\,\mathrm{kHz}$, amplitud de $100\,\mathrm{mV}$, $V_{pp} = 200\,\mathrm{mV}$). En la Figura 3 se ilustra el oscilograma para una ventana temporal de $50.0\,\mathrm{ms}$ en régimen permanente.
-
-![Oscilograma digital Rigol DHO914: análisis de ciclo completo a $60\,\mathrm{Hz}$ y filtrado de armónicos de alta frecuencia antes (CH1, amarillo) y después del filtro pasabajas pasivo (CH2, cian) ($R = 10.0\,\mathrm{k}\Omega, C = 100\,\mathrm{nF}, f_c = 159.15\,\mathrm{Hz}, \tau = 1.0\,\mathrm{ms}, V_{\mathrm{DC}} = 1.20\,\mathrm{V}, T = 16.67\,\mathrm{ms}, \Delta t = 0.96\,\mathrm{ms}, \theta = -20.66^\circ$).](img/osciloscopio_filtro.png){#fig:osciloscopio width=95%}
-
-A partir de la inspección del oscilograma se derivan las siguientes métricas cuantitativas:
-1. **Delimitación de Ciclo Completo:** En el canal CH1 se delimita un ciclo senoidal completo de la oscilación principal de $60.0\,\mathrm{Hz}$ entre los cursores temporales $t_1 = 0.00\,\mathrm{ms}$ y $t_2 = 16.67\,\mathrm{ms}$, corroborando un periodo de:
-   $$T = t_2 - t_1 = 16.67\,\mathrm{ms} - 0.00\,\mathrm{ms} = 16.67\,\mathrm{ms} \quad \Longrightarrow \quad f = \frac{1}{16.667\,\mathrm{ms}} = 60.0\,\mathrm{Hz}$$
-   La tensión pico a pico no filtrada abarca $V_{pp} \approx 240\,\mathrm{mV}$ en su componente de $60\,\mathrm{Hz}$, simétrica respecto a la tensión continua de $1.20\,\mathrm{V}$.
-2. **Medición de Retardo Temporal y Desfase:** Se observa un desplazamiento horizontal entre los picos de la señal no filtrada (CH1) y la señal filtrada (CH2) de $\Delta t = 0.96\,\mathrm{ms}$. Aplicando la relación geométrica de desfase armónico:
-   $$\theta_{\mathrm{medida}} = -\frac{\Delta t}{T} \times 360^\circ = -\frac{0.956\,\mathrm{ms}}{16.667\,\mathrm{ms}} \times 360^\circ = -20.66^\circ$$
-   lo que arroja un error relativo del $0.00\%$ respecto al valor analítico teórico $\theta = -\arctan(2\pi \cdot 60 \cdot RC) = -20.66^\circ$.
-3. **Atenuación de Ruido de Alta Frecuencia:** Para el ruido de conmutación de $2.0\,\mathrm{kHz}$ ($V_{pp,\mathrm{in}} = 200\,\mathrm{mV}$), la atenuación del filtro decae a:
-   $$|H(2.0\,\mathrm{kHz})| = \frac{1}{\sqrt{1 + (2000/159.15)^2}} = \frac{1}{\sqrt{1 + 157.92}} = 0.0793 \quad (-22.02\,\mathrm{dB})$$
-   reduciendo el rizado de alta frecuencia en el canal CH2 a un valor residual de $V_{pp,\mathrm{out}} = 200\,\mathrm{mV} \times 0.0793 \approx 15.86\,\mathrm{mV}$, lo que equivale a una supresión del $92.1\%$ del contenido de ruido armónico sin perturbar el nivel de polarización DC ($1.20\,\mathrm{V}$).
-
 ## Dinámica de Disparo del Comparador LM741 y Activación del LED
 
-Para evaluar el subsistema de alarma visual ante sobrecargas, se modeló una rampa de tensión en forma de sigmoide que emula el incremento continuo de la señal del transductor desde $0.0\,\mathrm{V}$ hasta el nivel nominal de $1.20\,\mathrm{V}$. La Figura 4 presenta la tensión de entrada frente a la salida del comparador y la corriente circulante por el diodo LED.
+Para evaluar el subsistema de alarma visual ante sobrecargas, se modeló una rampa de tensión en forma de sigmoide que emula el incremento continuo de la señal del transductor desde $0.0\,\mathrm{V}$ hasta el nivel nominal de $1.20\,\mathrm{V}$. La Figura 3 presenta la tensión de entrada frente a la salida del comparador y la corriente circulante por el diodo LED.
 
 ![Dinámica de conmutación del comparador LM741 y polarización del LED indicador ante cruce de umbral ($V_{\mathrm{ref}} = 1.00\,\mathrm{V}, V_{\mathrm{in}} = 1.20\,\mathrm{V}, R_{\mathrm{pot}} = 10.0\,\mathrm{k}\Omega, R_{\mathrm{LED}} = 330\,\Omega, V_f \approx 2.0\,\mathrm{V}, I_{\mathrm{LED}} \approx 25.7\,\mathrm{mA}$).](img/circuito_protoboard.png){#fig:comparador width=90%}
 
@@ -116,41 +95,42 @@ Durante el intervalo en que $V_{\mathrm{in}} < 1.00\,\mathrm{V}$ ($t < 10.01\,\m
 $$I_{\mathrm{LED}} = \frac{10.5\,\mathrm{V} - 2.0\,\mathrm{V}}{330\,\Omega} = 25.76\,\mathrm{mA}$$
 la cual enciende con luminosidad plena la alarma visual por sobrecarga.
 
-## Caracterización del Sensor Ultrasónico con el ESP32
+## Caracterización del Sensor Ultrasónico
 
-Se evaluó la linealidad estática del sensor ultrasónico HC-SR04 capturado por el microcontrolador ESP32 mediante 11 puntos de calibración en distancias reales de $4.0\,\mathrm{cm}$ a $50.0\,\mathrm{cm}$ medidas con regla graduada milimétrica. En la Figura 5 se ilustra la curva de calibración estática junto a la recta de regresión por mínimos cuadrados.
+Se evaluó el comportamiento de la señal proveniente del sensor ultrasónico mediante un osciloscopio, con el objetivo de observar cómo variaba su nivel de voltaje al modificar la distancia de un objeto colocado frente al sensor. A diferencia de una señal pulsante o senoidal, la respuesta observada se presentó como una línea aproximadamente constante en el tiempo, con pequeñas variaciones asociadas al ruido de medición.
 
-![Curva de calibración estática: tiempo de eco medido en el ESP32 frente a distancia real conocida ($R^2 = 0.9998, S = 58.31\,\mu\mathrm{s/cm}, v_{\mathrm{calc}} = 343.0\,\mathrm{m/s}$).](img/calibracion_ultrasonico.png){#fig:calibracion width=85%}
+Durante la prueba se acercó y alejó un objeto de manera gradual mientras se observaba la respuesta mostrada en el osciloscopio. Al modificar la posición del objeto, se identificó un cambio en la posición vertical de la señal, lo que representa una variación en el nivel de voltaje entregado por el sistema.
 
-El ajuste por el método de mínimos cuadrados arrojó el siguiente modelo matemático de regresión:
-$$t_{\mathrm{echo}} = 58.31 \cdot d + 1.25\,\mu\mathrm{s}$$
-El coeficiente de determinación obtenido fue $R^2 = 0.9998$, ratificando una correlación lineal prácticamente perfecta entre la distancia física y la duración del pulso digital. La sensibilidad estática calculada corresponde a la pendiente de la recta:
-$$S = \frac{\Delta t_{\mathrm{echo}}}{\Delta d} = 58.31\,\mu\mathrm{s/cm}$$
-A partir de dicha sensibilidad, la velocidad de propagación acústica deducida experimentalmente es:
-$$v_{\mathrm{calc}} = \frac{2}{S} = \frac{2}{58.31 \times 10^{-6}\,\mathrm{s/cm}} = 34300\,\mathrm{cm/s} = 343.0\,\mathrm{m/s}$$
-la cual coincide con una discrepancia del $0.00\%$ con la velocidad acústica teórica del aire a $20\,^\circ\mathrm{C}$ ($343.0\,\mathrm{m/s}$).
+De manera general, el comportamiento observado puede representarse mediante la relación:
 
-En la Tabla 2 se recopilan las mediciones cuantitativas de los 11 puntos de calibración experimental obtenidos con el microcontrolador ESP32 frente al patrón geométrico, confrontando los valores teóricos, medidos y ajustados por regresión lineal, así como los residuos individuales y los errores relativos porcentuales asociados.
+$$V_{\text{salida}} = f(d)$$
 
-| Distancia Patrón ($d$ en $\mathrm{cm}$) | Tiempo Teórico ($t_{\mathrm{teor}}$ en $\mu\mathrm{s}$) | Tiempo Medido ESP32 ($t_{\mathrm{med}}$ en $\mu\mathrm{s}$) | Tiempo Estimado Modelo ($t_{\mathrm{pred}}$ en $\mu\mathrm{s}$) | Error Residual ($e_i$ en $\mu\mathrm{s}$) | Error Relativo ($\%$) |
-| :---: | :---: | :---: | :---: | :---: | :---: |
-| $4.0$ | $233.2$ | $221.0$ | $234.5$ | $-13.5$ | $5.23\%$ |
-| $8.0$ | $466.5$ | $480.9$ | $467.7$ | $+13.2$ | $3.09\%$ |
-| $12.0$ | $699.7$ | $690.4$ | $701.0$ | $-10.6$ | $1.33\%$ |
-| $16.0$ | $933.0$ | $950.0$ | $934.2$ | $+15.8$ | $1.82\%$ |
-| $20.0$ | $1166.2$ | $1158.7$ | $1167.5$ | $-8.8$ | $0.64\%$ |
-| $25.0$ | $1457.7$ | $1477.2$ | $1459.0$ | $+18.2$ | $1.34\%$ |
-| $30.0$ | $1749.3$ | $1733.9$ | $1750.6$ | $-16.7$ | $0.88\%$ |
-| $35.0$ | $2040.8$ | $2054.6$ | $2042.1$ | $+12.5$ | $0.68\%$ |
-| $40.0$ | $2332.4$ | $2318.1$ | $2333.7$ | $-15.6$ | $0.61\%$ |
-| $45.0$ | $2623.9$ | $2633.9$ | $2625.2$ | $+8.7$ | $0.38\%$ |
-| $50.0$ | $2915.5$ | $2913.6$ | $2916.8$ | $-3.2$ | $0.07\%$ |
+donde:
 
-: Datos experimentales de calibración estática del sensor ultrasónico HC-SR04 capturados con el ESP32 frente al patrón geométrico de distancia.
+* $V_{\text{salida}}$ corresponde al nivel de voltaje observado en el osciloscopio.
+* $d$ representa la distancia entre el sensor ultrasónico y el objeto.
+
+En esta actividad no se realizó una curva de calibración cuantitativa ni un ajuste matemático entre distancia y voltaje; sin embargo, fue posible comprobar experimentalmente que la salida del sistema presenta cambios detectables cuando se modifica la posición del objeto.
+
+La Figura 4 muestra un ejemplo de la señal observada durante la práctica. Se aprecia que el comportamiento de la señal es aproximadamente constante en el tiempo y presenta únicamente pequeñas fluctuaciones alrededor de su valor medio.
+
+![Señal observada en el osciloscopio durante la caracterización del sensor ultrasónico. La respuesta presenta un nivel de voltaje aproximadamente constante, acompañado de pequeñas variaciones de ruido. Al modificar la distancia del objeto frente al sensor, se observó un cambio en el nivel de voltaje de la señal.](img/caracterizacion_ultrasonico.png){#fig:ultrasonico width=95%}
+
+Desde el punto de vista físico, los sensores ultrasónicos funcionan mediante la emisión de ondas acústicas de alta frecuencia que se propagan por el aire y se reflejan al encontrar un objeto. La onda reflejada regresa hacia el sistema receptor, donde puede ser convertida y procesada electrónicamente para obtener una señal relacionada con la presencia o posición del objeto.
+
+La respuesta obtenida puede verse afectada no solamente por la distancia, sino también por factores como el material y la geometría del objeto, su orientación respecto al sensor, la reflexión de la onda y las características propias del circuito electrónico empleado.
+
+Por esta razón, la relación entre distancia y nivel de voltaje no necesariamente es lineal:
+
+$$V_{\text{salida}} \not\propto d$$
+
+por lo que sería necesario realizar múltiples mediciones a distancias conocidas para determinar experimentalmente la curva característica del sistema.
+
+La actividad permitió comprobar de manera cualitativa que el sensor responde ante cambios en la posición de un objeto y que dicha respuesta puede ser analizada directamente mediante un osciloscopio. De esta forma, se relacionó una variable física, como la distancia, con una variable eléctrica medible, en este caso el nivel de voltaje de salida.
 
 ## Adquisición Continua en LabVIEW
 
-El flujo continuo de telemetría serial generado por el ESP32 a 115200 baudios se graficó en la interfaz virtual de LabVIEW. La Figura 6 ilustra la pantalla del *Waveform Chart* simulado ante un perfil de movimiento de aproximación, y la Figura 7 detalla la arquitectura modular del diagrama de bloques de adquisición VISA.
+El flujo continuo de telemetría serial generado por el ESP32 a 115200 baudios se graficó en la interfaz virtual de LabVIEW. La Figura 5 ilustra la pantalla del *Waveform Chart* simulado ante un perfil de movimiento de aproximación, y la Figura 6 detalla la arquitectura modular del diagrama de bloques de adquisición VISA.
 
 ![Emulación del Panel Frontal del Instrumento Virtual en LabVIEW: monitoreo continuo de distancia a 115200 baudios con límite de proximidad fijado en $15.0\,\mathrm{cm}$.](img/labview_front_panel.png){#fig:lv_front width=92%}
 
@@ -158,7 +138,7 @@ El flujo continuo de telemetría serial generado por el ESP32 a 115200 baudios s
 
 ## Tabla Sintética Comparativa de Parámetros de Diseño
 
-En la Tabla 3 se confrontan los parámetros analíticos de diseño frente a los resultados obtenidos mediante el modelado y simulación computacional de la cadena completa de acondicionamiento y adquisición.
+En la Tabla 2 se confrontan los parámetros analíticos de diseño frente a los resultados obtenidos mediante el modelado y simulación computacional de la cadena completa de acondicionamiento y adquisición.
 
 | Etapa del Circuito | Parámetro Característico | Valor Teórico | Valor Simulado | Ancho de Banda / $\tau$ / Métrica | Error Relativo |
 | :--- | :--- | :---: | :---: | :---: | :---: |
@@ -173,11 +153,11 @@ En la Tabla 3 se confrontan los parámetros analíticos de diseño frente a los 
 | Filtro Pasabajas Pasivo | Atenuación Ruido HF ($2\,\mathrm{kHz}$) | $-22.02\,\mathrm{dB}$ | $-22.02\,\mathrm{dB}$ | Supresión: $200 \to 15.8\,\mathrm{mV}_{pp}$ | $0.00\%$ |
 | Comparador de Voltaje | Umbral de disparo ($V_{\mathrm{ref}}$) | $1.000\,\mathrm{V}$ | $1.000\,\mathrm{V}$ | Tiempo de conmutación $t_{\mathrm{sw}} \approx 15\,\mu\mathrm{s}$ | $0.00\%$ |
 | Comparador de Voltaje | Corriente en LED ($I_{\mathrm{LED}}$) | $25.76\,\mathrm{mA}$ | $25.70\,\mathrm{mA}$ | Disipación $P_R \approx 219\,\mathrm{mW}$ | $0.23\%$ |
-| Sensor Ultrasónico (ESP32)| Sensibilidad estática ($S$) | $58.31\,\mu\mathrm{s/cm}$ | $58.31\,\mu\mathrm{s/cm}$ | Linealidad $R^2 = 0.9998$ | $0.00\%$ |
-| Sensor Ultrasónico (ESP32)| Velocidad acústica ($v$) | $343.0\,\mathrm{m/s}$ | $343.0\,\mathrm{m/s}$ | Derivada de pendiente $2/S$ | $0.00\%$ |
+| Sensor Ultrasónico | Nivel de tensión de salida | $V_{\mathrm{salida}} = f(d)$ | Variable según distancia | Inspección en osciloscopio | Cualitativo |
+| Sensor Ultrasónico | Dinámica temporal | Nivel DC continuo | Fluctuación por ruido | Línea horizontal en pantalla | Cualitativo |
 | Telemetría Serial UART | Latencia de paquete ($t_{\mathrm{tx}}$) | $0.87\,\mathrm{ms}$ | $< 1.00\,\mathrm{ms}$ | Tasa 115200 baud ($T_s = 50.0\,\mathrm{ms}$) | $0.00\%$ |
 
-: Tabla sintética comparativa de parámetros de diseño, simulación y errores relativos.
+: Tabla sintética comparativa de parámetros de diseño, simulación y evaluación experimental.
 
 ---
 
@@ -206,13 +186,6 @@ El empleo de un comparador en lazo abierto directamente sobre la señal analógi
 * **Velocidad de Reacción Determinista:** La conmutación del comparador LM741 toma entre $10$ y $15\,\mu\mathrm{s}$, mientras que un lazo de muestreo digital introduce un retardo dependiente del periodo de muestreo ($T_s = 50.0\,\mathrm{ms}$ en el ESP32), lo que representa una velocidad de respuesta más de 3000 veces superior para la activación de protecciones críticas.
 * **Comportamiento ante Señales Ruidosas y Necesidad de Histéresis:** En un comparador en lazo abierto ideal, cuando la señal de entrada fluctúa alrededor de $V_{\mathrm{ref}} = 1.00\,\mathrm{V}$ debido a ruido superpuesto, la salida conmuta repetidamente a alta frecuencia (fenómeno de *chattering* o falso disparo), provocando parpadeos indeseados en el LED. Para solucionar este problema en aplicaciones de carga inestable o entornos industriales ruidosos, es indispensable implementar una red de realimentación positiva que transforme el circuito en un **Trigger de Schmitt con histéresis** ($\Delta V_H$). Fijando umbrales de disparo superior e inferior en $V_{\mathrm{TH}} = 1.05\,\mathrm{V}$ y $V_{\mathrm{TL}} = 0.95\,\mathrm{V}$ ($\Delta V_H = 100\,\mathrm{mV}$), se elimina por completo la susceptibilidad al ruido armónico y se garantiza una conmutación limpia y unívoca.
 
-## Telemetría Serial y Determinismo Temporal con ESP32 y LabVIEW
-
-La integración del ESP32 con el sensor ultrasónico HC-SR04 y la interfaz de LabVIEW demostró las capacidades de supervisión remota del sistema:
-
-* **Temporización por Interrupciones de Hardware:** El microcontrolador capturó la duración del pulso *Echo* mediante temporizadores periféricos por interrupción, evitando el *jitter* y los errores de cuantización temporales característicos de los bucles por sondeo (*busy-wait*).
-* **Eficiencia del Enlace UART a 115200 Baudios:** Con tramas ASCII de 10 bytes transmitidas cada $50\,\mathrm{ms}$, el tiempo físico en línea del paquete serial es de apenas $0.87\,\mathrm{ms}$. Esto deja un margen de reposo en el bus superior al $98\%$, asegurando que el búfer de entrada de VISA en LabVIEW no experimente desbordamiento (*buffer overrun*) y actualice fluidamente el panel frontal a $20\,\mathrm{Hz}$.
-
 ## Análisis de No-Idealidades Físicas y Propuestas de Optimización Industrial
 
 A pesar de que el modelo analítico ideal exhibe un error teórico prácticamente nulo, en una implementación física industrial con componentes comerciales LM741 surgen desviaciones físicas inevitables:
@@ -238,13 +211,13 @@ Para elevar el sistema a estándares de instrumentación comercial o metrológic
 
 # Conclusions
 
-Se diseñó, modeló y validó rigurosamente una cadena completa de acondicionamiento analógico de señales y un subsistema de adquisición y supervisión digital en tiempo real.
+Se estudiaron, modelaron y analizaron experimentalmente diferentes métodos para el acondicionamiento analógico de señales eléctricas y la caracterización de sensores de proximidad.
 
 La modularización de la amplificación en dos etapas en cascada—un amplificador diferencial balanceado ($A_d = 10.0$) seguido de un amplificador no inversor ($A_v = 2.0$)—permitió elevar con exactitud una diferencia de potencial débil de $60.0\,\mathrm{mV}$ hasta un nivel óptimo de $1.20\,\mathrm{V}$. Esta estrategia aseguró la conservación del Producto Ganancia-Ancho de Banda ($\mathrm{GBP} \approx 1.0\,\mathrm{MHz}$), preservó un ancho de banda útil superior a $50.0\,\mathrm{kHz}$ y garantizó un margen dinámico seguro por debajo de los $3.0\,\mathrm{V}$ admisibles para la etapa digital. 
 
-El filtro pasabajas pasivo $RC$ ($R = 10.0\,\mathrm{k}\Omega, C = 100\,\mathrm{nF}, f_c = 159.15\,\mathrm{Hz}$) demostró experimentalmente la dualidad tiempo-frecuencia: en el dominio armónico atenuó el ruido de conmutación de alta frecuencia ($2.0\,\mathrm{kHz}$) en más de $22.0\,\mathrm{dB}$ ($92.1\%$ de atenuación) y exhibió un desfase exacto de $-20.66^\circ$ a $60\,\mathrm{Hz}$ ($\Delta t = 0.96\,\mathrm{ms}$), mientras que en el dominio temporal garantizó un tiempo de asentamiento imperceptible de $5.0\,\mathrm{ms}$ frente a dinámicas mecánicas. Por su parte, el comparador de tensión LM741 evidenció una velocidad de disparo por hardware en microsegundos ($< 15\,\mu\mathrm{s}$) e independiente de software ante sobrecargas superiores a $1.00\,\mathrm{V}$.
+El filtro pasabajas pasivo $RC$ ($R = 10.0\,\mathrm{k}\Omega, C = 100\,\mathrm{nF}, f_c = 159.15\,\mathrm{Hz}$) demostró la atenuación efectiva de componentes armónicas de alta frecuencia sin perturbar el nivel de polarización DC ni inducir retardos temporales apreciables. Por su parte, el comparador de tensión LM741 evidenció una velocidad de disparo por hardware en microsegundos ($< 15\,\mu\mathrm{s}$) e independiente de software ante sobrecargas superiores a $1.00\,\mathrm{V}$.
 
-En la capa digital, la caracterización del sensor ultrasónico mediante el ESP32 demostró una linealidad estática sobresaliente ($R^2 = 0.9998$) en el rango de 4 a 50 cm con una sensibilidad de $58.31\,\mu\mathrm{s/cm}$, y la interfaz gráfica en LabVIEW corroboró la robustez del enlace UART a 115200 baudios para visualización continua sin pérdidas de información. Finalmente, el análisis cuantitativo de no-idealidades sentó las directrices técnicas para la migración hacia instrumentación industrial de alto desempeño.
+En la actividad experimental con el sensor ultrasónico, la observación mediante osciloscopio demostró de forma cualitativa que la salida del sistema se manifiesta como un nivel de voltaje sensible a la distancia de un objeto, relacionando una variable física espacial con una magnitud de potencial eléctrico continuo sujeta a reflexiones acústicas y no-linealidades del transductor. Finalmente, el análisis cuantitativo de no-idealidades sentó las directrices técnicas para la optimización hacia instrumentación de precisión.
 
 ---
 
@@ -258,13 +231,13 @@ En la capa digital, la caracterización del sensor ultrasónico mediante el ESP3
 # Personal comments
 
 ## Leonardo Monter
-*Durante el desarrollo y simulación de la práctica pude constatar la importancia crítica de modularizar la ganancia en varias etapas operacionales. La conservación del Producto Ganancia-Ancho de Banda (GBP) es un factor determinante para evitar que la señal se distorsione o atenúe en frecuencias intermedias. Asimismo, el análisis del filtro RC en el oscilograma simulado evidenció con gran claridad la dualidad entre la atenuación de ruido armónico de conmutación y la correlación del desfase angular con el retardo temporal.*
+*Durante el desarrollo y simulación de la práctica pude constatar la importancia crítica de modularizar la ganancia en varias etapas operacionales. La conservación del Producto Ganancia-Ancho de Banda (GBP) es un factor determinante para evitar que la señal se distorsione o atenúe en frecuencias intermedias. Asimismo, el análisis del filtro RC en el oscilograma simulado evidenció con gran claridad la función de cada etapa dentro del circuito analógico.*
 
 ## Renata Bello
 *La implementación del comparador de voltaje como sistema de protección me permitió comprender el valor de los mecanismos de seguridad analógicos por hardware. Disponer de una respuesta en microsegundos que no dependa del microcontrolador ni de retardos en la comunicación serial representa una salvaguarda indispensable para evitar daños en transductores y etapas de potencia. Comprender la necesidad de agregar histéresis mediante un Trigger de Schmitt ante señales ruidosas fue uno de los aprendizajes más formativos del laboratorio.*
 
 ## Adrian Ruiz
-*El modelado de la interfaz de adquisición con el sensor ultrasónico y la transmisión serial a 115200 baudios hacia LabVIEW ilustró con claridad la necesidad de mantener sincronizados los tiempos de muestreo y las velocidades de transmisión. La linealidad observada en la curva de calibración ($R^2 = 0.9998$) confirma la validez de los temporizadores de alta resolución del ESP32 para aplicaciones de telemetría física en tiempo real.*
+*La caracterización del sensor ultrasónico mediante el osciloscopio me permitió observar directamente cómo la distancia de un objeto modifica el nivel de voltaje de salida. Identificar que la señal en pantalla es aproximadamente constante en el tiempo con pequeñas fluctuaciones de ruido, y comprender que la relación entre voltaje y distancia no es necesariamente lineal debido a reflexiones acústicas y características del circuito, me brindó un aprendizaje clave sobre la medición de variables físicas con instrumentos de laboratorio.*
 
 ## Alonso Madrigal
 *El análisis de las no-idealidades del LM741, en particular las corrientes de polarización y la tensión de offset, me brindó una visión realista de los retos de la instrumentación electrónica. Aunque el modelado matemático ideal entrega errores de diseño nulos, comprender cómo mitigar el offset mediante resistencias de compensación o mediante amplificadores de instrumentación especializados (como el INA128) es fundamental para proyectos industriales de alto desempeño.*
