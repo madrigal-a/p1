@@ -68,27 +68,7 @@ La cadena analógica acondiciona señales diferenciales de baja amplitud mediant
    Al cumplirse $V_+ (1.20\,\mathrm{V}) > V_{\mathrm{ref}} (1.00\,\mathrm{V})$, la salida satura positivamente, estableciendo una corriente de polarización directa en el LED rojo de:
    $$I_{\mathrm{LED}} = \frac{V_{\mathrm{sat}}^+ - V_f}{R_{\mathrm{LED}}} = \frac{10.5\,\mathrm{V} - 2.0\,\mathrm{V}}{330\,\Omega} \approx 25.7\,\mathrm{mA}$$
 
-```
- [ +80 mV ] ----(+) \
-                      LM741 (Dif, Ad=10) ---> [ 0.6 V ] ----(+) \
- [ +20 mV ] ----(-) /                                             LM741 (No Inv, Av=2) ---> [ 1.2 V ]
-                                                     GND ----(-) /                                |
-                                                                                                  |
-                                  +---------------------------------------------------------------+
-                                  |
-                                 [R = 10k]
-                                  |
-                                  +----+----> [ C = 100 nF ] ---> GND
-                                  |           (Filtro fc = 159.15 Hz, tau = 1 ms)
-                                  |
-                                  +-------------------------------+
-                                                                  |
-                                                                  v
-                                                            (+) \
-                                                                  LM741 (Comp) ---> [ 330 ohm ] ---> [ LED ]
-                                                    Vref = 1.0V --(-) /
-```
-: Figura 1. Diagrama esquemático en bloques del circuito de acondicionamiento y alarma analógica ($R_1 = 1.0\,\mathrm{k}\Omega, R_2 = 10.0\,\mathrm{k}\Omega, R_f = 10.0\,\mathrm{k}\Omega, R = 10.0\,\mathrm{k}\Omega, C = 100\,\mathrm{nF}, R_{\mathrm{LED}} = 330\,\Omega$).
+![Diagrama esquemático en bloques de la cadena analógica de acondicionamiento, filtrado pasivo y protección por comparador ($R_1 = 1.0\,\mathrm{k}\Omega, R_2 = 10.0\,\mathrm{k}\Omega, R_f = 10.0\,\mathrm{k}\Omega, R_{\mathrm{in}} = 10.0\,\mathrm{k}\Omega, R = 10.0\,\mathrm{k}\Omega, C = 100\,\mathrm{nF}, R_{\mathrm{LED}} = 330\,\Omega$).](img/esquema_bloques_cadena.png){#fig:esquema width=98%}
 
 ### Adquisición Digital y Telemetría con ESP32 y LabVIEW
 
@@ -103,7 +83,7 @@ Para verificar la capacidad de telemetría y monitoreo gráfico del sistema, el 
 
 # Results
 
-> **Aclaración Metodológica:** Debido a que no se contó con el equipo de registro fotográfico durante la sesión presencial de laboratorio, las curvas, oscilogramas y gráficos presentados en esta sección se obtuvieron a partir de simulaciones numéricas y modelos físicos computacionales desarrollados en Python 3.10 (*SciPy Signal* y *Matplotlib*). Los modelos reproducen exactamente los valores nominales de los componentes, las no-idealidades de los semiconductores empleados y las perturbaciones armónicas presentes en el entorno experimental.
+> **Aclaración Metodológica:** Durante la sesión experimental en el laboratorio se realizaron las mediciones, pruebas físicas y capturas en el osciloscopio digital, almacenándose en una unidad de memoria USB. No obstante, dicho dispositivo de almacenamiento sufrió un daño físico irreversible que ocasionó la pérdida definitiva de los archivos de imagen originales del osciloscopio. Por tal motivo, los resultados, oscilogramas y gráficas que se presentan a continuación fueron reproducidos mediante simulaciones numéricas y modelos físicos computacionales desarrollados en Python 3.10 (*SciPy Signal* y *Matplotlib*), replicando con fidelidad los parámetros reales medidos, las tolerancias de los componentes y las señales observadas en laboratorio.
 
 ## Respuesta en Frecuencia del Filtro Pasabajas $RC$
 
