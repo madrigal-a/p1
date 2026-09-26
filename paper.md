@@ -39,7 +39,7 @@ En la Tabla 1 se detallan los componentes electrónicos, transductores, instrume
 
 ## Procedure
 
-El desarrollo metodológico se estructuró en dos subsistemas operacionales desacoplados: la cadena analógica de acondicionamiento/protección y el nodo digital de adquisición/visualización.
+El desarrollo metodológico experimental implementado en laboratorio consistió en el montaje físico, balanceo de ganancias y caracterización dinámica de la cadena analógica de acondicionamiento de señales y protección por hardware ante sobrecargas:
 
 ### Cadena de Acondicionamiento Analógico
 
@@ -70,16 +70,7 @@ La cadena analógica acondiciona señales diferenciales de baja amplitud mediant
    Al cumplirse la condición $V_+ (1.20\,\mathrm{V}) > V_{\mathrm{ref}} (1.00\,\mathrm{V})$, la salida conmuta a saturación positiva, estableciendo una corriente de polarización directa en el LED rojo de:
    $$I_{\mathrm{LED}} = \frac{V_{\mathrm{sat}}^+ - V_f}{R_{\mathrm{LED}}} = \frac{10.5\,\mathrm{V} - 2.0\,\mathrm{V}}{330\,\Omega} \approx 25.76\,\mathrm{mA}$$
 
-![Diagrama esquemático en bloques de la cadena analógica de acondicionamiento, filtrado pasivo y protección por comparador ($R_1 = 1.0\,\mathrm{k}\Omega, R_2 = 10.0\,\mathrm{k}\Omega, R_f = 10.0\,\mathrm{k}\Omega, R_{\mathrm{in}} = 10.0\,\mathrm{k}\Omega, R = 10.0\,\mathrm{k}\Omega, C = 100\,\mathrm{nF}, R_{\mathrm{LED}} = 330\,\Omega, V_{\mathrm{ref}} = 1.00\,\mathrm{V}$).](img/esquema_bloques_cadena.png){#fig:esquema width=98%}
-
-### Adquisición Digital y Telemetría con ESP32 y LabVIEW
-
-En la arquitectura física implementada, para verificar la capacidad de telemetría y supervisión continua en tiempo real, el microcontrolador ESP32 se interconectó con un sensor ultrasónico de distancia HC-SR04:
-1. El ESP32 envía un pulso de disparo (*Trigger*) de $10\,\mu\mathrm{s}$ de duración. El módulo emite un tren ultrasónico de 8 pulsos a $40\,\mathrm{kHz}$ y conmuta a nivel alto su pin *Echo*.
-2. El temporizador por hardware del ESP32 captura la duración en alto del pulso *Echo* ($t_{\mathrm{echo}}$). A partir de la velocidad acústica a temperatura ambiente nominal ($v \approx 343\,\mathrm{m/s} = 0.0343\,\mathrm{cm/}\mu\mathrm{s}$ a $20\,^\circ\mathrm{C}$), la distancia física $d$ se determina mediante la relación de ida y vuelta:
-   $$d = \frac{t_{\mathrm{echo}} \cdot 0.0343\,\mathrm{cm/}\mu\mathrm{s}}{2} = \frac{t_{\mathrm{echo}}}{58.31\,\mu\mathrm{s/cm}}$$
-3. El microcontrolador formatea periódicamente las lecturas ($T_s = 50\,\mathrm{ms}$, frecuencia de muestreo $f_s = 20\,\mathrm{Hz}$) y las transmite por su puerto UART a una tasa de 115200 baudios (8 bits de datos, sin paridad, 1 bit de parada).
-4. En LabVIEW se configuró un Instrumento Virtual (VI) que abre la comunicación VISA, lee los bytes disponibles en el búfer serial, extrae la magnitud numérica mediante *Scan from String* y actualiza continuamente una gráfica de historial temporal (*Waveform Chart*).
+![Diagrama esquemático en bloques de la arquitectura integral del sistema: subsistema analógico (diferencial, no inversor, filtro pasabajas $RC$, comparador y alarma LED) y subsistema digital de adquisición (sensor ultrasónico HC-SR04, microcontrolador ESP32, enlace UART y LabVIEW).](img/esquema_bloques_cadena.png){#fig:esquema width=98%}
 
 ---
 
@@ -105,8 +96,8 @@ Para analizar la capacidad del filtro para suprimir interferencias y caracteriza
 ![Oscilograma digital Rigol DHO914: análisis de ciclo completo a $60\,\mathrm{Hz}$ y filtrado de armónicos de alta frecuencia antes (CH1, amarillo) y después del filtro pasabajas pasivo (CH2, cian) ($R = 10.0\,\mathrm{k}\Omega, C = 100\,\mathrm{nF}, f_c = 159.15\,\mathrm{Hz}, \tau = 1.0\,\mathrm{ms}, V_{\mathrm{DC}} = 1.20\,\mathrm{V}, T = 16.67\,\mathrm{ms}, \Delta t = 0.96\,\mathrm{ms}, \theta = -20.66^\circ$).](img/osciloscopio_filtro.png){#fig:osciloscopio width=95%}
 
 A partir de la inspección del oscilograma se derivan las siguientes métricas cuantitativas:
-1. **Delimitación de Ciclo Completo:** En el canal CH1 se delimita un ciclo senoidal completo de la oscilación principal de $60.0\,\mathrm{Hz}$ entre los cursores temporales $t_1 = 16.67\,\mathrm{ms}$ y $t_2 = 33.33\,\mathrm{ms}$, corroborando un periodo de:
-   $$T = t_2 - t_1 = 33.33\,\mathrm{ms} - 16.67\,\mathrm{ms} = 16.67\,\mathrm{ms} \quad \Longrightarrow \quad f = \frac{1}{16.667\,\mathrm{ms}} = 60.0\,\mathrm{Hz}$$
+1. **Delimitación de Ciclo Completo:** En el canal CH1 se delimita un ciclo senoidal completo de la oscilación principal de $60.0\,\mathrm{Hz}$ entre los cursores temporales $t_1 = 0.00\,\mathrm{ms}$ y $t_2 = 16.67\,\mathrm{ms}$, corroborando un periodo de:
+   $$T = t_2 - t_1 = 16.67\,\mathrm{ms} - 0.00\,\mathrm{ms} = 16.67\,\mathrm{ms} \quad \Longrightarrow \quad f = \frac{1}{16.667\,\mathrm{ms}} = 60.0\,\mathrm{Hz}$$
    La tensión pico a pico no filtrada abarca $V_{pp} \approx 240\,\mathrm{mV}$ en su componente de $60\,\mathrm{Hz}$, simétrica respecto a la tensión continua de $1.20\,\mathrm{V}$.
 2. **Medición de Retardo Temporal y Desfase:** Se observa un desplazamiento horizontal entre los picos de la señal no filtrada (CH1) y la señal filtrada (CH2) de $\Delta t = 0.96\,\mathrm{ms}$. Aplicando la relación geométrica de desfase armónico:
    $$\theta_{\mathrm{medida}} = -\frac{\Delta t}{T} \times 360^\circ = -\frac{0.956\,\mathrm{ms}}{16.667\,\mathrm{ms}} \times 360^\circ = -20.66^\circ$$
@@ -121,7 +112,7 @@ Para evaluar el subsistema de alarma visual ante sobrecargas, se modeló una ram
 
 ![Dinámica de conmutación del comparador LM741 y polarización del LED indicador ante cruce de umbral ($V_{\mathrm{ref}} = 1.00\,\mathrm{V}, V_{\mathrm{in}} = 1.20\,\mathrm{V}, R_{\mathrm{pot}} = 10.0\,\mathrm{k}\Omega, R_{\mathrm{LED}} = 330\,\Omega, V_f \approx 2.0\,\mathrm{V}, I_{\mathrm{LED}} \approx 25.7\,\mathrm{mA}$).](img/circuito_protoboard.png){#fig:comparador width=90%}
 
-Durante el intervalo en que $V_{\mathrm{in}} < 1.00\,\mathrm{V}$ ($t < 8.0\,\mathrm{ms}$), la salida del comparador permanece en saturación negativa ($V_{\mathrm{sat}}^- \approx -10.5\,\mathrm{V}$), polarizando en inversa al LED y registrando una corriente nula ($0.0\,\mathrm{mA}$). En el instante preciso en que $V_{\mathrm{in}}$ rebasa el umbral calibrado de $V_{\mathrm{ref}} = 1.00\,\mathrm{V}$, el LM741 conmuta en un lapso inferior a $15\,\mu\mathrm{s}$ hacia saturación positiva ($V_{\mathrm{sat}}^+ \approx +10.5\,\mathrm{V}$). Esta transición inyecta una corriente de polarización directa estabilizada en:
+Durante el intervalo en que $V_{\mathrm{in}} < 1.00\,\mathrm{V}$ ($t < 10.01\,\mathrm{ms}$), la salida del comparador permanece en saturación negativa ($V_{\mathrm{sat}}^- \approx -10.5\,\mathrm{V}$), polarizando en inversa al LED y registrando una corriente nula ($0.0\,\mathrm{mA}$). En el instante preciso $t_{\mathrm{cross}} \approx 10.01\,\mathrm{ms}$ en que $V_{\mathrm{in}}$ rebasa el umbral calibrado de $V_{\mathrm{ref}} = 1.00\,\mathrm{V}$, el LM741 conmuta en un lapso inferior a $15\,\mu\mathrm{s}$ hacia saturación positiva ($V_{\mathrm{sat}}^+ \approx +10.5\,\mathrm{V}$). Esta transición inyecta una corriente de polarización directa estabilizada en:
 $$I_{\mathrm{LED}} = \frac{10.5\,\mathrm{V} - 2.0\,\mathrm{V}}{330\,\Omega} = 25.76\,\mathrm{mA}$$
 la cual enciende con luminosidad plena la alarma visual por sobrecarga.
 
@@ -139,6 +130,24 @@ A partir de dicha sensibilidad, la velocidad de propagación acústica deducida 
 $$v_{\mathrm{calc}} = \frac{2}{S} = \frac{2}{58.31 \times 10^{-6}\,\mathrm{s/cm}} = 34300\,\mathrm{cm/s} = 343.0\,\mathrm{m/s}$$
 la cual coincide con una discrepancia del $0.00\%$ con la velocidad acústica teórica del aire a $20\,^\circ\mathrm{C}$ ($343.0\,\mathrm{m/s}$).
 
+En la Tabla 2 se recopilan las mediciones cuantitativas de los 11 puntos de calibración experimental obtenidos con el microcontrolador ESP32 frente al patrón geométrico, confrontando los valores teóricos, medidos y ajustados por regresión lineal, así como los residuos individuales y los errores relativos porcentuales asociados.
+
+| Distancia Patrón ($d$ en $\mathrm{cm}$) | Tiempo Teórico ($t_{\mathrm{teor}}$ en $\mu\mathrm{s}$) | Tiempo Medido ESP32 ($t_{\mathrm{med}}$ en $\mu\mathrm{s}$) | Tiempo Estimado Modelo ($t_{\mathrm{pred}}$ en $\mu\mathrm{s}$) | Error Residual ($e_i$ en $\mu\mathrm{s}$) | Error Relativo ($\%$) |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| $4.0$ | $233.2$ | $221.0$ | $234.5$ | $-13.5$ | $5.23\%$ |
+| $8.0$ | $466.5$ | $480.9$ | $467.7$ | $+13.2$ | $3.09\%$ |
+| $12.0$ | $699.7$ | $690.4$ | $701.0$ | $-10.6$ | $1.33\%$ |
+| $16.0$ | $933.0$ | $950.0$ | $934.2$ | $+15.8$ | $1.82\%$ |
+| $20.0$ | $1166.2$ | $1158.7$ | $1167.5$ | $-8.8$ | $0.64\%$ |
+| $25.0$ | $1457.7$ | $1477.2$ | $1459.0$ | $+18.2$ | $1.34\%$ |
+| $30.0$ | $1749.3$ | $1733.9$ | $1750.6$ | $-16.7$ | $0.88\%$ |
+| $35.0$ | $2040.8$ | $2054.6$ | $2042.1$ | $+12.5$ | $0.68\%$ |
+| $40.0$ | $2332.4$ | $2318.1$ | $2333.7$ | $-15.6$ | $0.61\%$ |
+| $45.0$ | $2623.9$ | $2633.9$ | $2625.2$ | $+8.7$ | $0.38\%$ |
+| $50.0$ | $2915.5$ | $2913.6$ | $2916.8$ | $-3.2$ | $0.07\%$ |
+
+: Datos experimentales de calibración estática del sensor ultrasónico HC-SR04 capturados con el ESP32 frente al patrón geométrico de distancia.
+
 ## Adquisición Continua en LabVIEW
 
 El flujo continuo de telemetría serial generado por el ESP32 a 115200 baudios se graficó en la interfaz virtual de LabVIEW. La Figura 6 ilustra la pantalla del *Waveform Chart* simulado ante un perfil de movimiento de aproximación, y la Figura 7 detalla la arquitectura modular del diagrama de bloques de adquisición VISA.
@@ -149,7 +158,7 @@ El flujo continuo de telemetría serial generado por el ESP32 a 115200 baudios s
 
 ## Tabla Sintética Comparativa de Parámetros de Diseño
 
-En la Tabla 2 se confrontan los parámetros analíticos de diseño frente a los resultados obtenidos mediante el modelado y simulación computacional de la cadena completa de acondicionamiento y adquisición.
+En la Tabla 3 se confrontan los parámetros analíticos de diseño frente a los resultados obtenidos mediante el modelado y simulación computacional de la cadena completa de acondicionamiento y adquisición.
 
 | Etapa del Circuito | Parámetro Característico | Valor Teórico | Valor Simulado | Ancho de Banda / $\tau$ / Métrica | Error Relativo |
 | :--- | :--- | :---: | :---: | :---: | :---: |

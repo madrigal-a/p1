@@ -59,12 +59,12 @@ ax2.scatter([fc], [-45.0], color='red', s=45, zorder=5)
 ax2.annotate(r'$-45.0^\circ\ @\ f_c$', xy=(fc, -45), xytext=(fc * 1.5, -30),
              arrowprops=dict(facecolor='black', shrink=0.05, width=1, headwidth=6))
 
-# Anotación fase a 60 Hz
+# Anotación fase a 60 Hz ubicada en espacio blanco inferior sin cruzar curva
 theta_60 = -np.degrees(np.arctan(60.0 / fc))
 ax2.scatter([60.0], [theta_60], color='purple', s=40, zorder=5)
-ax2.annotate(f'{theta_60:.1f}° @ 60 Hz', xy=(60.0, theta_60), xytext=(12.0, -18),
+ax2.annotate(f'{theta_60:.1f}° @ 60 Hz', xy=(60.0, theta_60), xytext=(8.0, -38),
              arrowprops=dict(facecolor='purple', shrink=0.05, width=1, headwidth=5),
-             fontsize=9.5, color='purple')
+             fontsize=9.5, color='purple', fontweight='bold')
 
 ax2.set_xlabel('Frecuencia (Hz)')
 ax2.set_ylabel('Fase (grados)')
@@ -98,15 +98,10 @@ noise_hf = amp_hf * np.sin(2 * np.pi * 2000.0 * t) + 0.015 * np.random.normal(0,
 v_in_noisy = v_dc + noise_60hz + noise_hf
 
 # Respuesta del filtro en régimen permanente:
-# 1) Componente DC pasa íntegra: 1.20 V
-# 2) Componente 60 Hz: |H(60)| = 1 / sqrt(1 + (60/159.15)^2) = 0.9357 (-0.58 dB)
-#                      desfase theta = -arctan(60/159.15) = -20.66 grados
 mag_60 = 1.0 / np.sqrt(1.0 + (60.0 / fc)**2)
 phase_60 = -np.arctan(60.0 / fc)
 out_60hz = amp_60hz * mag_60 * np.sin(2 * np.pi * 60.0 * t + phase_60)
 
-# 3) Componente 2 kHz: |H(2000)| = 1 / sqrt(1 + (2000/159.15)^2) = 0.0793 (-22.0 dB)
-#                      desfase theta = -arctan(2000/159.15) = -85.45 grados
 mag_hf = 1.0 / np.sqrt(1.0 + (2000.0 / fc)**2)
 phase_hf = -np.arctan(2000.0 / fc)
 out_hf = amp_hf * mag_hf * np.sin(2 * np.pi * 2000.0 * t + phase_hf)
@@ -115,12 +110,10 @@ out_hf = amp_hf * mag_hf * np.sin(2 * np.pi * 2000.0 * t + phase_hf)
 residual_noise = 0.003 * np.random.normal(0, 1, len(t))
 v_out_filtered = v_dc + out_60hz + out_hf + residual_noise
 
-# Retardo temporal teórico entre cruces por cero o picos a 60 Hz:
-# Delta_t = |theta| / (360 * f) = 20.66 / (360 * 60) = 0.956 ms
 dt_delay_ms = np.abs(np.degrees(phase_60)) / (360.0 * 60.0) * 1000.0  # ~0.956 ms
 t_period_ms = (1.0 / 60.0) * 1000.0  # 16.667 ms
 
-fig, ax = plt.subplots(figsize=(10.5, 5.8))
+fig, ax = plt.subplots(figsize=(10.8, 6.0))
 fig.patch.set_facecolor('#181818')
 ax.set_facecolor('#0d0d0d')
 
@@ -131,18 +124,18 @@ ax.plot(t * 1000, v_out_filtered, color='#00e5ff', linewidth=2.2,
         label=r'CH2: Salida Filtrada ($R=10.0\ \mathrm{k}\Omega,\ C=100\ \mathrm{nF},\ f_c=159.15\ \mathrm{Hz}$)')
 ax.axhline(1.20, color='#888888', linestyle=':', alpha=0.6, label='Nivel DC Nominal (1.20 V)')
 
-# Delimitación de ciclo completo (T = 16.67 ms)
-cycle_start = 16.667
-cycle_end = 33.333
+# Delimitación de ciclo completo en el primer periodo (T = 16.67 ms)
+cycle_start = 0.0
+cycle_end = 16.667
 ax.axvline(cycle_start, color='#ff5252', linestyle='--', linewidth=1.4, alpha=0.85)
 ax.axvline(cycle_end, color='#ff5252', linestyle='--', linewidth=1.4, alpha=0.85)
 
-ax.annotate('', xy=(cycle_end, 1.48), xytext=(cycle_start, 1.48),
+ax.annotate('', xy=(cycle_end, 1.54), xytext=(cycle_start, 1.54),
             arrowprops=dict(arrowstyle='<->', color='#ff5252', lw=1.8))
-ax.text((cycle_start + cycle_end) / 2, 1.50,
+ax.text((cycle_start + cycle_end) / 2, 1.58,
         f'Ciclo Completo: T = {t_period_ms:.2f} ms (f = 60.0 Hz)',
-        color='#ff5252', fontsize=9.5, fontweight='bold', ha='center',
-        bbox=dict(boxstyle='round,pad=0.2', facecolor='#262626', edgecolor='#ff5252'))
+        color='#ff5252', fontsize=9.2, fontweight='bold', ha='center',
+        bbox=dict(boxstyle='round,pad=0.25', facecolor='#262626', edgecolor='#ff5252', lw=1.2))
 
 # Delimitación de desfase Delta_t a 60 Hz
 peak1_t = 16.667 + 4.167  # pico CH1 a los 20.83 ms
@@ -165,20 +158,23 @@ ax.set_xlabel('Tiempo (ms)', color='white')
 ax.set_ylabel('Voltaje (V)', color='white')
 ax.tick_params(colors='white')
 ax.grid(True, color='#333333', linestyle='--', alpha=0.7)
-ax.set_ylim(0.85, 1.62)
+ax.set_ylim(0.85, 1.72)
 ax.set_xlim(0, 50.0)
 
-# Indicador de estado y mediciones cuantitativas
-ax.text(0.02, 0.88,
-        'MEDICIONES EN PANTALLA:\n'
-        f'• Periodo T: {t_period_ms:.2f} ms | Freq: 60.0 Hz\n'
-        rf'• Retardo $\Delta t$: {dt_delay_ms:.2f} ms | Desfase: -{np.abs(np.degrees(phase_60)):.1f}°\n'
-        r'• Atenuación Ruido HF (2 kHz): > 22.0 dB ($200 \to 15.8\ \mathrm{mV}_{pp}$)' + '\n'
-        r'• Rizado residual CH2: $V_{pp} \approx 225\ \mathrm{mV}\ (60\ \mathrm{Hz}) + 16\ \mathrm{mV}\ (2\ \mathrm{kHz})$',
-        transform=ax.transAxes, color='white', fontsize=8.5,
+# Indicador de estado y mediciones cuantitativas ubicado a la DERECHA SUPERIOR
+mediciones_texto = (
+    "MEDICIONES EN PANTALLA:\n"
+    f"• Periodo T: {t_period_ms:.2f} ms | Frecuencia: 60.0 Hz\n"
+    f"• Retardo Δt: {dt_delay_ms:.2f} ms | Desfase: -{np.abs(np.degrees(phase_60)):.1f}°\n"
+    "• Atenuación Ruido HF (2 kHz): > 22.0 dB (200 → 15.8 mVpp)\n"
+    "• Rizado residual CH2: Vpp ≈ 225 mV (60 Hz) + 16 mV (2 kHz)"
+)
+
+ax.text(0.98, 0.95, mediciones_texto,
+        transform=ax.transAxes, color='white', fontsize=8.5, va='top', ha='right',
         bbox=dict(boxstyle='round,pad=0.5', facecolor='#262626', alpha=0.92, edgecolor='#555555'))
 
-leg = ax.legend(loc='lower right', facecolor='#262626', edgecolor='#555555')
+leg = ax.legend(loc='lower left', facecolor='#262626', edgecolor='#555555')
 for text in leg.get_texts():
     text.set_color('white')
 
@@ -191,11 +187,14 @@ print("Generada img/osciloscopio_filtro.png")
 # 3. Respuesta Temporal del Comparador y Activación del LED
 # -------------------------------------------------------------
 t_comp = np.linspace(0, 20, 2000)  # 20 ms
-v_sig = 1.20 / (1 + np.exp(-0.8 * (t_comp - 8.0)))  # sigmoide centrada en 8 ms
 v_ref = 1.00  # Umbral de 1.0 V
+# Sigmoide centrada en 8.0 ms
+v_sig = 1.20 / (1.0 + np.exp(-0.8 * (t_comp - 8.0)))
+# Cruce exacto analítico: t_cross = 8.0 - ln(0.20)/0.8 = 10.0118 ms
+t_cross = 8.0 - np.log(1.20 / v_ref - 1.0) / 0.8
 
-v_comp_out = np.where(v_sig > v_ref, 10.5, -10.5)
-led_current = np.where(v_sig > v_ref, (10.5 - 2.0) / 330.0 * 1000.0, 0.0)  # mA
+v_comp_out = np.where(t_comp >= t_cross, 10.5, -10.5)
+led_current = np.where(t_comp >= t_cross, (10.5 - 2.0) / 330.0 * 1000.0, 0.0)  # mA
 
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9.5, 6.2), sharex=True)
 fig.suptitle('Dinámica de Disparo del Comparador LM741 y Alarma LED [DATOS SIMULADOS]\n'
@@ -205,10 +204,12 @@ fig.suptitle('Dinámica de Disparo del Comparador LM741 y Alarma LED [DATOS SIMU
 # Entradas
 ax1.plot(t_comp, v_sig, 'b-', linewidth=2.2, label=r'$V_{\mathrm{in}}$ (Señal Acondicionada)')
 ax1.axhline(v_ref, color='r', linestyle='--', linewidth=1.8, label=r'$V_{\mathrm{ref}} = 1.00\ \mathrm{V}$ (Umbral de Alarma)')
-ax1.axvline(8.0, color='gray', linestyle=':', alpha=0.7)
-ax1.scatter([8.0], [v_ref], color='red', s=50, zorder=5)
-ax1.annotate('Punto de disparo (Vin > Vref)', xy=(8.0, v_ref), xytext=(2.0, 1.15),
-             arrowprops=dict(facecolor='black', shrink=0.05, width=1, headwidth=6))
+ax1.axvline(t_cross, color='gray', linestyle=':', linewidth=1.5, alpha=0.85)
+ax1.scatter([t_cross], [v_ref], color='red', s=55, zorder=5)
+ax1.annotate(r'Punto de disparo ($V_{\mathrm{in}} > V_{\mathrm{ref}} = 1.00\ \mathrm{V}$ @ $t = 10.01\ \mathrm{ms}$)',
+             xy=(t_cross, v_ref), xytext=(2.0, 1.18),
+             arrowprops=dict(facecolor='black', shrink=0.05, width=1, headwidth=6),
+             fontweight='bold', fontsize=9.5)
 ax1.set_ylabel('Voltaje de Entrada (V)')
 ax1.grid(True, linestyle='--', alpha=0.6)
 ax1.legend(loc='lower right', framealpha=0.9)
@@ -216,6 +217,7 @@ ax1.set_ylim(-0.1, 1.4)
 
 # Salida del Comparador y Estado del LED
 ax2.plot(t_comp, v_comp_out, 'purple', linewidth=2.2, label=r'$V_{\mathrm{out}}$ LM741 ($\pm 10.5\ \mathrm{V}$ sat)')
+ax2.axvline(t_cross, color='gray', linestyle=':', linewidth=1.5, alpha=0.85)
 ax2_twin = ax2.twinx()
 ax2_twin.plot(t_comp, led_current, 'r--', linewidth=2.0, label=r'Corriente LED ($I_{\mathrm{LED}}$ en mA)')
 ax2_twin.set_ylabel('Corriente en LED (mA)', color='red')
@@ -228,7 +230,7 @@ ax2.grid(True, linestyle='--', alpha=0.6)
 ax2.set_ylim(-13, 13)
 
 # Etiquetas de estado
-ax2.text(2.5, 0, 'ESTADO: NORMAL\nLED APAGADO (0 mA)\nSalida: Sat. Negativa (-10.5 V)',
+ax2.text(2.0, 0, 'ESTADO: NORMAL\nLED APAGADO (0 mA)\nSalida: Sat. Negativa (-10.5 V)',
          fontsize=8.5, bbox=dict(facecolor='#e8f5e9', edgecolor='green'))
 ax2.text(11.5, 0, 'ESTADO: SOBRECARGA / ALERTA\nLED ENCENDIDO (25.7 mA)\nSalida: Sat. Positiva (+10.5 V)',
          fontsize=8.5, bbox=dict(facecolor='#ffebee', edgecolor='red'))
@@ -241,16 +243,14 @@ print("Generada img/circuito_protoboard.png")
 # -------------------------------------------------------------
 # 4. Calibración del Sensor Ultrasónico HC-SR04 (ESP32)
 # -------------------------------------------------------------
-dist_real = np.array([4, 8, 12, 16, 20, 25, 30, 35, 40, 45, 50])  # cm
-v_sound_cm_us = 0.0343  # cm/us (343 m/s a 20 °C)
-tiempo_eco_teorico = (2 * dist_real) / v_sound_cm_us  # us
-
-np.random.seed(101)
-tiempo_eco_medido = tiempo_eco_teorico + np.random.normal(0, 10, len(dist_real))
+dist_real = np.array([4.0, 8.0, 12.0, 16.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0])  # cm
+tiempo_eco_medido = np.array([221.0, 480.9, 690.4, 950.0, 1158.7, 1477.2, 1733.9, 2054.6, 2318.1, 2633.9, 2913.6])  # us
 
 slope, intercept = np.polyfit(dist_real, tiempo_eco_medido, 1)
 y_pred = slope * dist_real + intercept
-r2 = 1 - np.sum((tiempo_eco_medido - y_pred)**2) / np.sum((tiempo_eco_medido - np.mean(tiempo_eco_medido))**2)
+r2 = 1.0 - np.sum((tiempo_eco_medido - y_pred)**2) / np.sum((tiempo_eco_medido - np.mean(tiempo_eco_medido))**2)
+sensibilidad_us_cm = slope
+v_calc = (2.0 / sensibilidad_us_cm) * 10000.0  # m/s
 
 fig, ax = plt.subplots(figsize=(8.8, 5.6))
 ax.errorbar(dist_real, tiempo_eco_medido, yerr=12, fmt='o', color='navy', ecolor='gray',
@@ -258,15 +258,13 @@ ax.errorbar(dist_real, tiempo_eco_medido, yerr=12, fmt='o', color='navy', ecolor
 ax.plot(dist_real, y_pred, 'r-', linewidth=2.2,
         label=rf'Ajuste Lineal: $t_{{\mathrm{{echo}}}} = {slope:.2f}\cdot d + {intercept:.2f}\ \mu\mathrm{{s}}\ (R^2 = {r2:.4f})$')
 
-ax.set_title('Curva de Calibración del Sensor Ultrasónico HC-SR04 con ESP32 [DATOS EXPERIMENTALES REPRODUCIDOS]',
+ax.set_title('Curva de Calibración del Sensor Ultrasónico HC-SR04 con ESP32\n[DATOS EXPERIMENTALES REPRODUCIDOS]',
              fontweight='bold', fontsize=12)
 ax.set_xlabel('Distancia Real Medida con Patrón (cm)')
 ax.set_ylabel(r'Tiempo de Pulso Echo ($t_{\mathrm{echo}}$ en $\mu\mathrm{s}$)')
 ax.grid(True, linestyle='--', alpha=0.6)
 
-sensibilidad_us_cm = slope
-v_calc = (2.0 / sensibilidad_us_cm) * 10000.0  # m/s
-ax.text(0.05, 0.76,
+ax.text(0.05, 0.74,
         f'Sensibilidad Estática: S = {sensibilidad_us_cm:.2f} µs/cm\n'
         f'Velocidad Acústica Derivada: v = {v_calc:.1f} m/s\n'
         f'Coeficiente de Determinación: R² = {r2:.4f}\n'
@@ -359,3 +357,172 @@ plt.tight_layout()
 plt.savefig('img/labview_block_diagram.png', dpi=300, facecolor=fig.get_facecolor())
 plt.close()
 print("Generada img/labview_block_diagram.png")
+
+# -------------------------------------------------------------
+# 7. Diagrama Esquemático Integral de la Cadena de Medición
+# -------------------------------------------------------------
+fig, ax = plt.subplots(figsize=(16, 9.2), dpi=300)
+ax.set_xlim(0, 100)
+ax.set_ylim(0, 100)
+ax.axis('off')
+fig.patch.set_facecolor('#ffffff')
+
+# Titulos generales
+ax.text(50, 97, 'ARQUITECTURA INTEGRAL DE LA CADENA DE MEDICIÓN Y ADQUISICIÓN',
+        ha='center', va='center', fontsize=15, fontweight='bold', color='#0d233a')
+ax.text(50, 93.8, 'Diseño de Interfaces Digitales — Universidad Anáhuac México (Laboratorio 1)',
+        ha='center', va='center', fontsize=11, color='#555555')
+
+# Encabezado A: Subsistema Analógico
+ax.text(3, 89, 'A. SUBSISTEMA ANALÓGICO: ACONDICIONAMIENTO, FILTRADO Y PROTECCIÓN POR HARDWARE',
+        fontsize=11.5, fontweight='bold', color='#1565c0')
+
+analog_boxes = [
+    (3, 56, 21, 30,
+     'ETAPA 1: DIFERENCIAL',
+     '• OpAmp: LM741 (Dual ±12 V)\n'
+     '• R1 = 1.0 kΩ, R2 = 10.0 kΩ\n'
+     '• Ganancia: Ad = 10.0 (20 dB)\n'
+     '• Entrada: V2=80 mV, V1=20 mV\n'
+     '• Diferencial: ΔV = 60.0 mV\n'
+     '• Salida Vo1 = 0.60 V\n'
+     '• Rechazo Modo Común (CMRR)',
+     '#e3f2fd', '#1565c0'),
+    (27, 56, 21, 30,
+     'ETAPA 2: NO INVERSOR',
+     '• OpAmp: LM741 (Dual ±12 V)\n'
+     '• Rf = 10.0 kΩ, Rin = 10.0 kΩ\n'
+     '• Ganancia: Av = 2.0 (6.02 dB)\n'
+     '• Ganancia Total: Atot = 20.0\n'
+     '• Entrada: Vo1 = 0.60 V\n'
+     '• Salida: Vo2 = 1.20 V\n'
+     '• Aislamiento de impedancia',
+     '#e0f2f1', '#00796b'),
+    (51, 56, 21, 30,
+     'ETAPA 3: FILTRO RC',
+     '• Pasabajas 1er orden pasivo\n'
+     '• R = 10.0 kΩ, C = 100 nF\n'
+     '• fc = 159.15 Hz, τ = 1.0 ms\n'
+     '• Atenuación 60 Hz: -0.58 dB\n'
+     '• Atenuación 2 kHz: -22.0 dB\n'
+     '• Salida: Vfilt = 1.20 V\n'
+     '• Supresión de armónicos HF',
+     '#f9fbe7', '#689f38'),
+    (75, 56, 22, 30,
+     'ETAPA 4: COMPARADOR',
+     '• OpAmp: LM741 (Lazo abierto)\n'
+     '• Umbral: Vref = 1.00 V (Pot)\n'
+     '• Condición: Vin > 1.00 V\n'
+     '• Salida: Vsat+ = +10.5 V\n'
+     '• Resistor LED: R = 330 Ω\n'
+     '• I_LED = 25.7 mA (LED ON)\n'
+     '• Corte rápido t_sw < 15 µs',
+     '#fff3e0', '#e65100'),
+]
+
+for x, y, w, h, title, body, fcol, ecol in analog_boxes:
+    patch = FancyBboxPatch((x, y), w, h, boxstyle='round,pad=0.5,rounding_size=1.5',
+                           facecolor=fcol, edgecolor=ecol, linewidth=1.8)
+    ax.add_patch(patch)
+    ax.text(x + w/2, y + h - 2.8, title, fontsize=10.5, fontweight='bold', color=ecol, ha='center', va='top')
+    ax.text(x + 1.2, y + h - 6.2, body, fontsize=9.0, color='#212121', va='top', linespacing=1.35)
+
+# Flechas analógicas
+analog_arrows = [
+    ((24, 71), (27, 71), 'Vo1=0.6V'),
+    ((48, 71), (51, 71), 'Vo2=1.2V'),
+    ((72, 71), (75, 71), 'Vfilt=1.2V'),
+]
+for p1, p2, label in analog_arrows:
+    ax.annotate('', xy=p2, xytext=p1,
+                arrowprops=dict(arrowstyle='->', lw=2.2, color='#1565c0'))
+    ax.text((p1[0] + p2[0])/2, p1[1] + 2.0, label, ha='center', va='bottom',
+            fontsize=8.5, fontweight='bold', color='#1565c0',
+            bbox=dict(boxstyle='round,pad=0.2', facecolor='#ffffff', edgecolor='#1565c0', lw=0.8))
+
+# Encabezado B: Subsistema Digital
+ax.text(3, 50, 'B. SUBSISTEMA DIGITAL: TRANSDUCCIÓN, MICROCONTROLADOR Y TELEMETRÍA SERIAL',
+        fontsize=11.5, fontweight='bold', color='#2e7d32')
+
+digital_boxes = [
+    (3, 17, 21, 30,
+     'TRANSDUCTOR HC-SR04',
+     '• Ultrasonido de 40 kHz\n'
+     '• Rango físico: 4 a 50 cm\n'
+     '• Pulso Trigger: 10 µs TTL\n'
+     '• Pulso Echo: PWM proporcional\n'
+     '• S = 58.31 µs/cm (v = 343 m/s)\n'
+     '• Regresión lineal R² = 0.9998\n'
+     '• Precisión milimétrica',
+     '#ede7f6', '#512da8'),
+    (27, 17, 21, 30,
+     'MICROCONTROLADOR ESP32',
+     '• Núcleo Xtensa 32-bit (240 MHz)\n'
+     '• Captura por interrupción\n'
+     '• Temporizadores periféricos\n'
+     '• Intervalo Ts = 50 ms (20 Hz)\n'
+     '• Conversión digital de eco\n'
+     '• Transmisor UART0 hardware\n'
+     '• Cero jitter en lazo cerrado',
+     '#f3e5f5', '#7b1fa2'),
+    (51, 17, 21, 30,
+     'ENLACE SERIAL UART',
+     '• Baudrate: 115200 baudios\n'
+     '• Trama: 8N1 (Sin paridad)\n'
+     '• Formato ASCII: [dist]\\r\\n\n'
+     '• Paquete: 8-10 bytes\n'
+     '• Tiempo en bus: 0.87 ms\n'
+     '• Margen libre de bus > 98%\n'
+     '• Conexión directa a PC',
+     '#e8eaf6', '#283593'),
+    (75, 17, 22, 30,
+     'VI LABVIEW (RECEPCIÓN)',
+     '• Módulo NI-VISA Serial DAQ\n'
+     '• Búfer de recepción FIFO\n'
+     '• Scan From String ("%f\\n")\n'
+     '• Waveform Chart tiempo real\n'
+     '• Límite proximidad a 15 cm\n'
+     '• Tasa de actualización 20 Hz\n'
+     '• Supervisión gráfica remota',
+     '#e1f5fe', '#0277bd'),
+]
+
+for x, y, w, h, title, body, fcol, ecol in digital_boxes:
+    patch = FancyBboxPatch((x, y), w, h, boxstyle='round,pad=0.5,rounding_size=1.5',
+                           facecolor=fcol, edgecolor=ecol, linewidth=1.8)
+    ax.add_patch(patch)
+    ax.text(x + w/2, y + h - 2.8, title, fontsize=10.5, fontweight='bold', color=ecol, ha='center', va='top')
+    ax.text(x + 1.2, y + h - 6.2, body, fontsize=9.0, color='#212121', va='top', linespacing=1.35)
+
+# Flechas digitales
+digital_arrows = [
+    ((24, 32), (27, 32), 'Echo PWM'),
+    ((48, 32), (51, 32), 'TX UART'),
+    ((72, 32), (75, 32), 'VISA Read'),
+]
+for p1, p2, label in digital_arrows:
+    ax.annotate('', xy=p2, xytext=p1,
+                arrowprops=dict(arrowstyle='->', lw=2.2, color='#2e7d32'))
+    ax.text((p1[0] + p2[0])/2, p1[1] + 2.0, label, ha='center', va='bottom',
+            fontsize=8.5, fontweight='bold', color='#2e7d32',
+            bbox=dict(boxstyle='round,pad=0.2', facecolor='#ffffff', edgecolor='#2e7d32', lw=0.8))
+
+# Cuadro inferior de síntesis metodológica
+sum_patch = FancyBboxPatch((3, 2), 94, 12, boxstyle='round,pad=0.5,rounding_size=1.5',
+                           facecolor='#f5f5f5', edgecolor='#455a64', linewidth=1.5)
+ax.add_patch(sum_patch)
+ax.text(50, 11.0, 'SÍNTESIS INTEGRAL DE LA ARQUITECTURA EXPERIMENTAL',
+        ha='center', va='center', fontsize=10.5, fontweight='bold', color='#263238')
+
+summary_text = (
+    '• Cadena Analógica: ΔV = 60.0 mV → Ganancia Cascada Atot = 10 × 2 = 20.0 (26.02 dB) → Nivel condicionado Vo = 1.20 V (< 3.0 V límite ADC).\n'
+    '• Filtro Pasabajas RC: fc = 159.15 Hz, τ = 1.0 ms. Pasa fundamental de 60 Hz (-0.58 dB) y atenúa ruido parásito HF a 2 kHz (> 22.0 dB).\n'
+    '• Protección por Hardware: Comparador LM741 conmuta en < 15 µs inyectando 25.7 mA al LED Rojo ante cualquier sobrecarga Vin > 1.00 V.\n'
+    '• Adquisición Digital: ESP32 cronometra pulso de eco del HC-SR04 (S = 58.31 µs/cm, R² = 0.9998, v = 343.0 m/s) y transmite vía UART (115200) a LabVIEW a 20 Hz.'
+)
+ax.text(50, 6.2, summary_text, ha='center', va='center', fontsize=8.8, color='#37474f', linespacing=1.35)
+
+plt.tight_layout()
+plt.savefig('img/esquema_bloques_cadena.png', dpi=300)
+plt.close()
+print("Generada img/esquema_bloques_cadena.png")
