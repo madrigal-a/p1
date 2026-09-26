@@ -2,9 +2,10 @@
 title: "Lab Session 1: Signal Conditioning, Characterization, and Visualization"
 subtitle: "Diseño de Interfaces Digitales"
 author:
-  - "Nombre del Alumno 1 - ID"
-  - "Nombre del Alumno 2 - ID"
-  - "Nombre del Alumno 3 - ID"
+  - "Leonardo Monter - 00496389"
+  - "Renata Bello - 00495856"
+  - "Adrian Ruiz - 00495856"
+  - "Alonso Madrigal - 00516302"
 instructor: "Israel Cayetano Jiménez, ing. microtechn. dipl. EPF, M.Sc."
 institution: "Universidad Anáhuac México"
 date: "Septiembre 25, 2026"
